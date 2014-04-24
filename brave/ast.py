@@ -70,7 +70,7 @@ class CodeParser(object):
                         elif c == 'r':
                             stringbuffer += "\r"
                         else:
-                            stringbuffer = c
+                            stringbuffer += c
                     elif (
                         (status == 'doublequote' and c == '"') or
                         (status == 'singlequote' and c == "'")
