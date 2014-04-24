@@ -34,16 +34,60 @@ class InvalidSyntax(Exception):
 class DontUseTabs(InvalidSyntax):
     error = "Use spaces for indentation instead of tabs"
 
+class InvalidBackSlash(InvalidSyntax):
+    error = "Only \\t \\r \\n \\r are supported."
+
 class CodeParser(object):
     def __init__(self, lines):
         self.lines = lines
 
     def parse(self):
         ast = []
+        status = ''
+        stack = []
+        stringbuffer = ""
+        prevc = None
         for y, line in enumerate(self.lines):
             for x, c in enumerate(line):
-                if c == "\t":
-                    raise DontUseTabs(x, y, self.lines)
+
+                if status == '':
+                    if c == "\t":
+                        raise DontUseTabs(x, y, self.lines)
+                    elif c == '"':
+                        status = 'doublequote'
+                        stringbuffer = ''
+                    elif c == "'":
+                        status = 'singlequote'
+                        stringbuffer = ''
+                elif status in ('doublequote', 'singlequote'):
+                    if prevc == "\\":
+                        if c not in ('t', '"', "'", 'n', 'r', '\\'):
+                            raise InvalidBackSlash(x, y, self.lines)
+                        elif c == 't':
+                            stringbuffer += "\t"
+                        elif c == 'n':
+                            stringbuffer += "\n"
+                        elif c == 'r':
+                            stringbuffer += "\r"
+                        else:
+                            stringbuffer = c
+                    elif (
+                        (status == 'doublequote' and c == '"') or
+                        (status == 'singlequote' and c == "'")
+                    ):
+                        print "Stringbuffer", stringbuffer
+                        status = ''
+                    elif c == "\\":
+                        pass
+                    else:
+                        stringbuffer += c
+
+                else:
+                    print "Invalid status"
+
+                prevc = c
+
+
 
 
 def parse_code(code):
